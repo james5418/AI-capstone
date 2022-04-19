@@ -115,7 +115,7 @@ def _WaitConnection(indexPlayer, idTeam, flagDirectlySpawn, pathExe):
             return True
     # spawn process
     # subprocess.Popen(["taskkill", "/im", "Sample.exe"])
-    if indexPlayer == 3:
+    if indexPlayer == 1:
         subprocess.Popen("python ../agent.py")
     elif (len(pathExe) != 0):
         subprocess.Popen([pathExe])
