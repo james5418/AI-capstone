@@ -53,7 +53,7 @@ if __name__ == "__main__":
     # vertical_wall = zeros([17, 16])
     (stop_program, id_package, parallel_wall, vertical_wall) = STcpClient.GetMap()
 
-
+    rw = []
     while True:
         # playerStat: [x, y, n_landmine,super_time, score]
         # otherplayerStat: [x, y, n_landmine, super_time]
@@ -64,6 +64,7 @@ if __name__ == "__main__":
             break
         elif stop_program is None:
             break
+        rw.append(playerStat[3])
         global action
         action = None
         user_thread = MyThread(target=getStep, args=(playerStat, ghostStat, propsStat))
@@ -76,3 +77,5 @@ if __name__ == "__main__":
         is_connect=STcpClient.SendStep(id_package, action[0], action[1])
         if not is_connect:
             break
+
+    print(rw)
