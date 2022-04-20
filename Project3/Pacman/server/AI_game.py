@@ -10,7 +10,7 @@ import random
 
 def main():
     team_id = []
-    with open('./path.txt', 'r', encoding="utf-8") as f:
+    with open('../path.txt', 'r', encoding="utf-8") as f:
         for line in f.readlines():
             if line[-1] == '\n':
                 team_id.append(line[:-1])
