@@ -35,8 +35,6 @@ class MyThread(threading.Thread):
 def getStep(playerStat, ghostStat, propsStat):
     global action
 
-    # player = (playerStat[0],playerStat[1])
-    # state = (player, ghostStat, propsStat)
     state = (playerStat, ghostStat, propsStat)
 
     move = RL.choose_action(state)
@@ -79,13 +77,13 @@ class QLearningAgent():
         # else:
             # q_target = reward
 
-        self.Q_table[(state, action)] += self.lr * (q_target - q_predict)
+        self.Q_table[state, action] += self.lr * (q_target - q_predict)
     
 
     def getLegalActions(self, state):
         
         # 0: left, 1:right, 2: up, 3: down 4:no control
-        directions = {0: (0, -1), 1: (0, 1), 2: (-1, 0), 3: (1, 0), 4: (0, 0)}
+        directions = {0: (-1,0), 1: (1,0), 2: (0,-1), 3: (0,1), 4: (0, 0)}
 
         # state[0][2] = landmain
         # state[0][3] = super_time
@@ -93,19 +91,15 @@ class QLearningAgent():
         possible = []
         for dir, (dx, dy) in directions.items():
 
-            if dir == 4:
-                possible.append(dir)
-                continue
+            # if dir == 4:
+            #     possible.append(dir)
+            #     continue
 
             next_x = state[0][0] + dx
             next_y = state[0][1] + dy
 
-
             if next_x < 0: next_x = 0
             if next_y < 0: next_y = 0
-
-            # if next_x > 15 or next_x < 0 or next_y > 15 or next_y < 0:
-            #     continue
 
             
             if (dir == 0) and not vertical_wall[state[0][0]][state[0][1]]: # left
@@ -119,17 +113,11 @@ class QLearningAgent():
 
         return possible
 
-# parallel_wall = np.zeros((16, 17))
-# vertical_wall = np.zeros((17, 16))
-parallel_wall = np.zeros((17, 16))
-vertical_wall = np.zeros((16, 17))
+parallel_wall = np.zeros((16, 17))
+vertical_wall = np.zeros((17, 16))
 
 
 """
-(0,0) (0,1) (0,2)
-(1,0) (1,1) (1,2)
-(2,0) (2,1) (2,2)
-
 (0,0) (1,0) (2,0)
 (0,1) (1,1) (2,1)
 (0,2) (1,2) (2,2)
@@ -145,7 +133,6 @@ def parse_player(playerStat):
     landmain = 1 if playerStat[2]>0 else 0
     super_time = 1 if playerStat[3]>0 else 0
     return (playerStat[0]//25, playerStat[1]//25, landmain, super_time), playerStat[4]
-    # return (playerStat[0]//25, playerStat[1]//25, playerStat[2], playerStat[3], playerStat[4])
 
 def parse_ghost(ghostStat):
     g = [[ ghostStat[x][y]//25 for y in range(len(ghostStat[0]))] for x in range(len(ghostStat))]
@@ -163,26 +150,26 @@ rw = []
 def training():
     
     for episode in range(1):
-        
+
         # TODO reset game
         (stop_program, id_package, p_wall, v_wall) = STcpClient.GetMap()
         (stop_program, id_package, playerStat, otherPlayerStat, ghostStat, propsStat) = STcpClient.GetGameStat()
 
-        playerStat, reward = parse_player(playerStat)
+        playerStat, _ = parse_player(playerStat)
         ghostStat = parse_ghost(ghostStat)
         propsStat = parse_prop(propsStat)
 
-        # player = (playerStat[0],playerStat[1])
-        # state = (player, ghostStat, propsStat)
         state = (playerStat, ghostStat, propsStat)
 
         parallel_wall = p_wall
         vertical_wall = v_wall
 
+        old_reward = 0
+
         while True:
             global action
             action = None
-
+            
             user_thread = MyThread(target=getStep, args=(playerStat, ghostStat, propsStat))
             user_thread.start()
             time.sleep(4/100)
@@ -195,34 +182,27 @@ def training():
             (stop_program, id_package, playerStat, otherPlayerStat, ghostStat, propsStat) = STcpClient.GetGameStat()
 
             if stop_program or stop_program is None or not is_connect:
-                print(f'Episode {episode} score = {reward}')
+                print(f'Episode {episode} score = {pscore}')
                 print(rw)
                 break
 
-            playerStat, reward = parse_player(playerStat)
+            playerStat, pscore = parse_player(playerStat)
             ghostStat = parse_ghost(ghostStat)
             propsStat = parse_prop(propsStat)
 
-            # player = (playerStat[0],playerStat[1])
-            # next_state = (player, ghostStat, propsStat)
             next_state = (playerStat, ghostStat, propsStat)
 
-            # reward = playerStat[3]
-            rw.append(reward)
+            reward = pscore - old_reward
 
+            rw.append(reward)
 
             RL.update(state, action[0], reward, next_state)
 
             state = next_state
-
-            
-        # print(RL.Q_table)
-        
-        
+            old_reward = pscore
 
 
 if __name__ == "__main__":
 
     RL = QLearningAgent()
-
     training()
