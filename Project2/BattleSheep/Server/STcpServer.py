@@ -120,7 +120,7 @@ def _WaitConnection(indexPlayer, idTeam, flagDirectlySpawn, pathExe):
     elif (len(pathExe) != 0):
         subprocess.Popen([pathExe])
     # if (len(pathExe) != 0):
-    #     subprocess.Popen([pathExe])
+        # subprocess.Popen([pathExe])
     (flagSuccess, socketClient) = _TryAccept(idTeam)
     if (flagSuccess):
         socketPlayer[indexPlayer] = socketClient
