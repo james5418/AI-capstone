@@ -9,7 +9,7 @@ from copy import copy
 idTeam = 2
 global confident
 global Round
-confident = 1 / math.sqrt(2)
+confident = 1
 Round = 0
 
 class State(object):
@@ -81,13 +81,13 @@ class Node(object):
         self.children.append(sub_node)
 
 def best_child(node, is_exploration):
-    best_score = -1
+    best_score = -100000
     best_sub_node = None
     for sub_node in node.children:
         if is_exploration:
-            # C = 1 / math.sqrt(2)
+            C = 1 / math.sqrt(2)
             global confident
-            C = confident
+            C *= confident
         else:
             C = 0
         left = sub_node.quality_value / sub_node.visit_times
@@ -122,40 +122,68 @@ def tree_policy(node):
             return sub_node
     return node
 
-def default_policy(node):
+def default_policy(node,ID,ratio):
     cur_state = node.get_state()
     while cur_state.is_terminal() == False:
         cur_state = cur_state.random_next_state()[0]
-    reward = cur_state.get_reward()
+    # reward = cur_state.get_reward()[idTeam-1]
+    scores = cur_state.get_reward()
+    reward = scores[ID-1] - (scores[ID%4] + scores[(ID+1)%4] + scores[(ID+2)%4]) * ratio * 0
+    # print("score :",scores)
+    # print("reward :",reward)
     return reward
 
 def backup(node, reward):
     while node != None:
         node.visit_times += 1
-        node.quality_value += reward[idTeam-1]
+        node.quality_value += reward
         node = node.parent
 
-def MCTS(node):
-    round = 500
-    for i in range(round):
+def MCTS(node,ID,sim_round):
+    global confident
+    sim_round = 500
+    for i in range(sim_round):
         expand_node = tree_policy(node)
-        reward = default_policy(expand_node)
+        reward = default_policy(expand_node,ID,confident)
         backup(expand_node, reward)
     best_node = best_child(node, False)
     return best_node
 
-def InitPos(mapStat):
-    init_pos = gr.randomInitPlayer(mapStat)
+def InitPos(mapStat,playerID):
+    init_pos = []
+    best = -1000000
+    for _ in range(20):
+        cur_pos = []
+        Map = copy(mapStat)
+        Sheep = (Map > 0).astype('int32')
+        for i in range(12):
+            for j in range(12):
+                Sheep[i][j] = 16 if Sheep[i][j] == 1 else 0
+        for i in range(playerID,5):
+            pos = gr.randomInitPlayer(Map)
+            Map[pos[0]][pos[1]] = i
+            Sheep[pos[0]][pos[1]] = 16
+            if i == playerID:
+                cur_pos = pos
+        state = State(playerID,Map,Sheep)
+        node = Node(state)
+        reward = 0
+        for i in range(30):
+            reward += default_policy(node,playerID,0)
+        if best < reward:
+            best = reward
+            init_pos = cur_pos
+    # print(type(mapStat))
     return init_pos
 
 def GetStep(playerID, mapStat, sheepStat):
+    global confident
+    global Round
     cur_state = State(playerID,mapStat,sheepStat)
     cur_node = Node(cur_state)
-    next_node = MCTS(cur_node)
+    next_node = MCTS(cur_node,playerID,500 + Round * 50)
     # print('next step :',next_node.from_step)
-    global confident
-    confident *= 0.9
-    global Round
+    confident *= 1
     Round += 1
     print("round :",Round)
     return next_node.from_step[playerID-1]
@@ -163,7 +191,7 @@ def GetStep(playerID, mapStat, sheepStat):
 
 # player initial
 (id_package, playerID, mapStat) = STcpClient.GetMap()
-init_pos = InitPos(mapStat)
+init_pos = InitPos(mapStat,playerID)
 STcpClient.SendInitPos(id_package, init_pos)
 
 # start game
