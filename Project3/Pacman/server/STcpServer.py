@@ -115,7 +115,7 @@ def _WaitConnection(indexPlayer, idTeam, flagDirectlySpawn, pathExe):
     # subprocess.Popen(["taskkill", "/im", "Sample.exe"])
 
     if indexPlayer == 3:
-        subprocess.Popen("python ../python/Qlearning_4.py")
+        subprocess.Popen("python ../python/Qlearning_6.py")
     elif(len(pathExe) != 0):
         subprocess.Popen([pathExe])
     (flagSuccess, socketClient) = _TryAccept(idTeam)

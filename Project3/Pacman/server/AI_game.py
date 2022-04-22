@@ -6,8 +6,9 @@ import threading
 from gameUI import *
 import pygame as pg
 import random
-
-
+import time
+MAX_STEP = 2000
+EPISODE = 550
 def main():
     team_id = []
     with open('../path.txt', 'r', encoding="utf-8") as f:
@@ -28,21 +29,23 @@ def main():
     idTeam4 = int(team_id[6])
     pathExe4 = team_id[7]
 
-    (success, failId) = STcpServer.StartMatch(idTeam1, pathExe1, idTeam2, pathExe2, idTeam3, pathExe3, idTeam4, pathExe4)
+    for i in range(EPISODE):
+        print("This time is : ",EPISODE)
+        (success, failId) = STcpServer.StartMatch(idTeam1, pathExe1, idTeam2, pathExe2, idTeam3, pathExe3, idTeam4, pathExe4)
 
-    if(not success):
-        print("connection fail, teamId:", failId)
-    else:
-        print("connect success, init game")
-        # 16*16 16*16
-        p_wall, v_wall = gameUI.createMap()
+        if(not success):
+            print("connection fail, teamId:", failId)
+        else:
+            print("connect success, init game")
+            # 16*16 16*16
+            p_wall, v_wall = gameUI.createMap()
 
-        for playerid in range(4):
-            success = STcpServer.SendMap(playerid, p_wall, v_wall)
-            if success != 0:
-                print("init fail")
-
-        gamestart(p_wall, v_wall)
+            for playerid in range(4):
+                success = STcpServer.SendMap(playerid, p_wall, v_wall)
+                if success != 0:
+                    print("init fail")
+            gamestart(p_wall, v_wall)
+            # time.sleep(15)
 
 def gamestart(p_wall, v_wall):
     screen = initialize()
@@ -66,7 +69,7 @@ def gamestart(p_wall, v_wall):
             if event.type == pg.QUIT:
                 leave = True
                 pg.quit()
-        if (len(landmine_sprites) == 0 and len(power_sprites) == 0 and len(pellet_sprites) == 0 and leave == False) or STcpServer.idPackage > 6000:
+        if (len(landmine_sprites) == 0 and len(power_sprites) == 0 and len(pellet_sprites) == 0 and leave == False) or STcpServer.idPackage > MAX_STEP:
             leave = True
             pg.quit()
         if leave == True: break
