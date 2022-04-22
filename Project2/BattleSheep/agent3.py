@@ -62,11 +62,12 @@ class Node(object):
         self.player = state.player
 
     def set_quality(self,scores,cur_ID):
-        rank = sorted(range(len(scores)), key = lambda k: scores[k])
-        reward = rank.index(self.player-1)
+        # rank = sorted(range(len(scores)), key = lambda k: scores[k])
+        # reward = rank.index(self.player-1)
+        reward = scores[self.player-2 if self.player != 1 else 3]
         # reward = scores[self.player-1]
-        if self.player == cur_ID:
-            self.quality_value += reward
+        # print("player ",self.player,"rank :",rank,",",reward)
+        self.quality_value += reward
 
     def get_state(self):
         return self.state
@@ -110,11 +111,7 @@ def expand(node):
     return sub_node
 
 def tree_policy(node):
-    temp = 0
     while node.get_state().is_terminal() == False:
-        temp += 1
-        if temp > 1000:
-            print(temp)
         if node.is_all_expand() and node.state.check_move():
             node = best_child(node, True)   
         else:
@@ -126,25 +123,27 @@ def default_policy(node,ID,ratio):
     # print("default")
     cur_state = node.get_state()
     while cur_state.is_terminal() == False:
+        # print("state :",cur_state.player)
         cur_state = cur_state.random_next_state()[0]
     # reward = cur_state.get_reward()[idTeam-1]
     scores = cur_state.get_reward()
     # reward = scores[ID-1] - (scores[ID%4] + scores[(ID+1)%4] + scores[(ID+2)%4]) * ratio * 0.3
     # print("score :",scores)
-    # print("reward :",reward)
     return scores
 
 def backup(node, reward):
+    # print("----- backup -----")
     cur_ID = node.player
     while node != None:
         node.visit_times += 1
         node.set_quality(reward,cur_ID)
         node = node.parent
 
-def MCTS(node,ID,sim_round,start_t):
+def MCTS(node,ID,start_t):
     global confident
     # for i in range(sim_round):
     while time.time() < start_t + 4.5:
+    # if True:
         # print(i)
         expand_node = tree_policy(node)
         reward = default_policy(expand_node,ID,confident)
@@ -156,7 +155,6 @@ def InitPos(mapStat,playerID):
     start_t = time.time()
     init_pos = []
     best = -1000000
-    # for _ in range(15):
     while time.time() < start_t + 4:
         cur_pos = []
         Map = copy(mapStat)
@@ -187,11 +185,12 @@ def GetStep(playerID, mapStat, sheepStat):
     start_t = time.time()
     cur_state = State(playerID,mapStat,sheepStat)
     cur_node = Node(cur_state)
-    next_node = MCTS(cur_node,playerID,100,start_t)
+    next_node = MCTS(cur_node,playerID,start_t)
     # print('next step :',next_node.from_step)
     confident *= 1
     Round += 1
     print("round :",Round)
+    # print(next_node.from_step)
     return next_node.from_step[playerID-1]
 
 
