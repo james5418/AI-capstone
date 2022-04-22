@@ -5,6 +5,9 @@ import math
 import Server.gameRule as gr
 from statistics import mean
 from copy import copy
+from time import time
+
+# 四個步驟一個 state，扣除對手分數
 
 idTeam = 2
 global confident
@@ -139,10 +142,10 @@ def backup(node, reward):
         node.quality_value += reward
         node = node.parent
 
-def MCTS(node,ID,sim_round):
+def MCTS(node,ID,start_t):
     global confident
-    sim_round = 500
-    for i in range(sim_round):
+    # for i in range(sim_round):
+    while time() < start_t + 4.5:
         expand_node = tree_policy(node)
         reward = default_policy(expand_node,ID,confident)
         backup(expand_node, reward)
@@ -152,7 +155,9 @@ def MCTS(node,ID,sim_round):
 def InitPos(mapStat,playerID):
     init_pos = []
     best = -1000000
-    for _ in range(20):
+    start_t = time()
+    while time() < start_t + 4:
+    # for _ in range(15):
         cur_pos = []
         Map = copy(mapStat)
         Sheep = (Map > 0).astype('int32')
@@ -179,9 +184,10 @@ def InitPos(mapStat,playerID):
 def GetStep(playerID, mapStat, sheepStat):
     global confident
     global Round
+    start_t = time()
     cur_state = State(playerID,mapStat,sheepStat)
     cur_node = Node(cur_state)
-    next_node = MCTS(cur_node,playerID,500 + Round * 50)
+    next_node = MCTS(cur_node,playerID,start_t)
     # print('next step :',next_node.from_step)
     confident *= 1
     Round += 1
