@@ -477,7 +477,7 @@ def countScore(mapStat):
     score = []
     for player in range(1, 5):
         _, n_field, max_field = getConnectRegion(player, mapStat)
-        # print(f'{player}=3*{n_field}+{max_field}')
+        print(f'{player}=3*{n_field}+{max_field}')
         s = 3 * n_field + max_field
         score.append(s)
     return score

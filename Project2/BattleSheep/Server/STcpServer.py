@@ -115,12 +115,12 @@ def _WaitConnection(indexPlayer, idTeam, flagDirectlySpawn, pathExe):
             return True
     # spawn process
     # subprocess.Popen(["taskkill", "/im", "Sample.exe"])
-    if indexPlayer == 1:
+    if indexPlayer == 2:
         subprocess.Popen("python ../agent3.py")
     elif (len(pathExe) != 0):
         subprocess.Popen([pathExe])
     # if (len(pathExe) != 0):
-        # subprocess.Popen([pathExe])
+    #     subprocess.Popen([pathExe])
     (flagSuccess, socketClient) = _TryAccept(idTeam)
     if (flagSuccess):
         socketPlayer[indexPlayer] = socketClient
